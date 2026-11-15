@@ -5,40 +5,26 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
-  const getOrigin = (urlStr) => {
-    try {
-      const u = new URL(urlStr);
-      return u.origin;
-    } catch (_) {
-      return '';
-    }
-  };
-
-  const mainTarget = getOrigin(env.VITE_API_BASE_URL);
-  const featureTarget = getOrigin(env.VITE_FEATURE_API_BASE_URL);
-
-  const proxy = {};
-  if (mainTarget) {
-    proxy['/proxy-main'] = {
-      target: mainTarget,
-      changeOrigin: true,
-      secure: false,
-      rewrite: (path) => path.replace(/^\/proxy-main/, ''),
-    };
-  }
-  if (featureTarget) {
-    proxy['/proxy-feature'] = {
-      target: featureTarget,
-      changeOrigin: true,
-      secure: false,
-      rewrite: (path) => path.replace(/^\/proxy-feature/, ''),
-    };
-  }
+  const mainTarget = env.VITE_API_BASE_URL || 'https://aaha-api-405281288207.asia-south1.run.app/api/v2';
+  const featureTarget = env.VITE_FEATURE_API_BASE_URL || 'https://aaha-feature-backend.onrender.com/api/v2';
 
   return {
     plugins: [react()],
     server: {
-      proxy,
+      proxy: {
+        '/api-proxy-main': {
+          target: mainTarget,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api-proxy-main/, ''),
+        },
+        '/api-proxy-feature': {
+          target: featureTarget,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api-proxy-feature/, ''),
+        },
+      },
     },
   };
 });

@@ -11,28 +11,18 @@
 
 const getApiBaseUrl = () => {
   const url = import.meta.env.VITE_API_BASE_URL || '';
-  // In development, route through Vite proxy to eliminate browser CORS restrictions
-  if (import.meta.env.DEV && (url.startsWith('http://') || url.startsWith('https://'))) {
-    try {
-      const parsed = new URL(url);
-      return `/proxy-main${parsed.pathname.replace(/\/$/, '')}`;
-    } catch (_) {
-      return '/proxy-main/api/v2';
-    }
+  // Route through proxy to eliminate browser CORS on both Vercel and local dev
+  if (!url || url.includes('aaha-api-405281288207') || url.startsWith('/api-proxy')) {
+    return '/api-proxy-main';
   }
   return url.endsWith('/') ? url.slice(0, -1) : url;
 };
 
 const getFeatureApiBaseUrl = () => {
-  const url = import.meta.env.VITE_FEATURE_API_BASE_URL || getApiBaseUrl();
-  // In development, route through Vite proxy to eliminate browser CORS restrictions
-  if (import.meta.env.DEV && (url.startsWith('http://') || url.startsWith('https://'))) {
-    try {
-      const parsed = new URL(url);
-      return `/proxy-feature${parsed.pathname.replace(/\/$/, '')}`;
-    } catch (_) {
-      return '/proxy-feature/api/v2';
-    }
+  const url = import.meta.env.VITE_FEATURE_API_BASE_URL || '';
+  // Route through proxy to eliminate browser CORS on both Vercel and local dev
+  if (!url || url.includes('aaha-feature-backend') || url.startsWith('/api-proxy')) {
+    return '/api-proxy-feature';
   }
   return url.endsWith('/') ? url.slice(0, -1) : url;
 };

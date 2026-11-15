@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api-proxy-main/:path*",
+      "destination": "https://aaha-api-405281288207.asia-south1.run.app/api/v2/:path*"
+    },
+    {
+      "source": "/api-proxy-feature/:path*",
+      "destination": "https://aaha-feature-backend.onrender.com/api/v2/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
