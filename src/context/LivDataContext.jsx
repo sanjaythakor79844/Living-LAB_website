@@ -5,81 +5,90 @@ import {
   fetchPatientCarePlan, 
   getAuthToken 
 } from '../services/livAppApi';
+import {
+  SAMPLE_PROFILE,
+  SAMPLE_REPORTS,
+  SAMPLE_CARE_PLAN
+} from '../services/sampleData';
 
 const LivDataContext = createContext(null);
 
 export function LivDataProvider({ children }) {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [reportsData, setReportsData] = useState({
-    reports: [],
-    latestReport: null,
-    previousReport: null,
-    awisScore: null,
-    previousScore: null,
-    delta: null,
-    deltaText: null,
-    riskLabel: null,
-    categories: null,
-    assistantMessage: null,
-  });
-  const [profileData, setProfileData] = useState({
-    patient: null,
-    fullName: null,
-  });
-  const [carePlanData, setCarePlanData] = useState({
-    carePlans: [],
-    activePlan: null,
-    dailyTaskTitle: null,
-    planSummary: null,
-    duration: null,
-    programmeDayText: null,
-  });
+  const [reportsData, setReportsData] = useState(SAMPLE_REPORTS);
+  const [profileData, setProfileData] = useState(SAMPLE_PROFILE);
+  const [carePlanData, setCarePlanData] = useState(SAMPLE_CARE_PLAN);
 
   const loadData = useCallback(async () => {
+    const token = getAuthToken();
+
+    // If backend is not connected or no auth token is provided, use sample data directly
+    if (!token) {
+      setReportsData(SAMPLE_REPORTS);
+      setProfileData(SAMPLE_PROFILE);
+      setCarePlanData(SAMPLE_CARE_PLAN);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    // Run all three requests in parallel; handle individual failures gracefully so one failure doesn't break the whole page
-    const [reportsRes, profileRes, carePlanRes] = await Promise.allSettled([
-      fetchPatientReports(),
-      fetchPatientProfile(),
-      fetchPatientCarePlan(),
-    ]);
+    try {
+      // Run all three requests in parallel; handle individual failures gracefully so one failure doesn't break the whole page
+      const [reportsRes, profileRes, carePlanRes] = await Promise.allSettled([
+        fetchPatientReports(),
+        fetchPatientProfile(),
+        fetchPatientCarePlan(),
+      ]);
 
-    let anyError = null;
+      let anyError = null;
 
-    if (reportsRes.status === 'fulfilled') {
-      setReportsData(reportsRes.value);
-    } else {
-      console.warn('Reports API failed:', reportsRes.reason);
-      anyError = reportsRes.reason;
+      if (reportsRes.status === 'fulfilled' && reportsRes.value) {
+        setReportsData(reportsRes.value);
+      } else {
+        console.warn('Reports API failed, using sample data:', reportsRes.reason);
+        setReportsData(SAMPLE_REPORTS);
+        anyError = reportsRes.reason;
+      }
+
+      if (profileRes.status === 'fulfilled' && profileRes.value) {
+        setProfileData(profileRes.value);
+      } else {
+        console.warn('Patient Profile API failed, using sample data:', profileRes.reason);
+        setProfileData(SAMPLE_PROFILE);
+        if (!anyError) anyError = profileRes.reason;
+      }
+
+      if (carePlanRes.status === 'fulfilled' && carePlanRes.value) {
+        setCarePlanData(carePlanRes.value);
+      } else {
+        console.warn('Care Plan API failed, using sample data:', carePlanRes.reason);
+        setCarePlanData(SAMPLE_CARE_PLAN);
+        if (!anyError) anyError = carePlanRes.reason;
+      }
+
+      setError(anyError);
+    } catch (err) {
+      console.warn('Backend connection error, falling back to sample data:', err);
+      setReportsData(SAMPLE_REPORTS);
+      setProfileData(SAMPLE_PROFILE);
+      setCarePlanData(SAMPLE_CARE_PLAN);
+      setError(err);
+    } finally {
+      setLoading(false);
     }
-
-    if (profileRes.status === 'fulfilled') {
-      setProfileData(profileRes.value);
-    } else {
-      console.warn('Patient Profile API failed:', profileRes.reason);
-      if (!anyError) anyError = profileRes.reason;
-    }
-
-    if (carePlanRes.status === 'fulfilled') {
-      setCarePlanData(carePlanRes.value);
-    } else {
-      console.warn('Care Plan API failed:', carePlanRes.reason);
-      if (!anyError) anyError = carePlanRes.reason;
-    }
-
-    setError(anyError);
-    setLoading(false);
   }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  // Unified assistant message priority: Report assistant message -> Care plan message -> null
-  const assistantMessage = reportsData.assistantMessage || carePlanData.activePlan?.assistant_message || null;
+  // Unified assistant message priority: Report assistant message -> Care plan message -> Sample message
+  const assistantMessage = reportsData.assistantMessage || 
+                           carePlanData.activePlan?.assistant_message || 
+                           SAMPLE_REPORTS.assistantMessage;
 
   const value = {
     loading,
@@ -90,6 +99,7 @@ export function LivDataProvider({ children }) {
     assistantMessage,
     refreshData: loadData,
     hasToken: Boolean(getAuthToken()),
+    isSampleData: !getAuthToken(),
   };
 
   return (

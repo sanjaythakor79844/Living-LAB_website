@@ -120,3 +120,15 @@ test('Missing data policy - category scores not fabricated', () => {
   assert.equal(categories, null);
   // Confirms frontend will not invent or mock categories when backend doesn't provide them
 });
+
+test('Frontend sample data integrity - provides values when backend is disconnected', async () => {
+  const { SAMPLE_PROFILE, SAMPLE_REPORTS, SAMPLE_CARE_PLAN } = await import('../src/services/sampleData.js');
+
+  assert.equal(SAMPLE_PROFILE.fullName, 'Sample member');
+  assert.equal(SAMPLE_REPORTS.awisScore, 78);
+  assert.equal(SAMPLE_REPORTS.deltaText, 'Up 4 since your last visit.');
+  assert.equal(SAMPLE_REPORTS.categories.length, 3);
+  assert.equal(SAMPLE_CARE_PLAN.dailyTaskTitle, 'Morning light, ten minutes');
+  assert.equal(SAMPLE_CARE_PLAN.programmeDayText, 'Day 12 of your plan');
+  assert.ok(SAMPLE_REPORTS.assistantMessage.includes('Your report is ready'));
+});

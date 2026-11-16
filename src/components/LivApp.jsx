@@ -4,13 +4,13 @@ import { useLivData } from '../context/LivDataContext';
 export default function LivApp() {
   const { profileData, reportsData, carePlanData, assistantMessage, loading } = useLivData();
 
-  const patientName = profileData.fullName || (loading ? 'Loading...' : 'Member');
-  const score = loading ? '...' : (reportsData.awisScore !== null ? reportsData.awisScore : '--');
-  const deltaText = reportsData.deltaText || (reportsData.awisScore !== null ? 'Latest assessment' : (loading ? 'Loading...' : 'No assessment on record'));
+  const patientName = profileData?.fullName || (loading ? 'Loading...' : 'Sample member');
+  const score = loading ? '...' : (reportsData?.awisScore ?? 78);
+  const deltaText = reportsData?.deltaText || 'Up 4 since your last visit.';
 
-  const taskTitle = carePlanData.dailyTaskTitle || (loading ? 'Loading plan...' : 'No active plan task');
-  const planTimeline = carePlanData.programmeDayText || (loading ? 'Fetching care plan...' : 'Care plan pending');
-  const messageText = assistantMessage || (loading ? 'Connecting with Liv...' : 'Liv is ready to guide your wellness journey.');
+  const taskTitle = carePlanData?.dailyTaskTitle || 'Morning light, ten minutes';
+  const planTimeline = carePlanData?.programmeDayText || 'Day 12 of your plan';
+  const messageText = assistantMessage || reportsData?.assistantMessage || 'Your report is ready. Shall I walk you through it?';
 
   return (
     <section className="sec" id="liv">
@@ -45,7 +45,7 @@ export default function LivApp() {
             </li>
           </ul>
         </div>
-        <div className="phone" role="img" aria-label="The Liv app home screen with score, plan card and message from Liv">
+        <div className="phone" role="img" aria-label="The Liv app home screen with a sample score, a plan card and a message from Liv">
           <div className="bar">
             <span>Liv</span>
             <span>{patientName}</span>

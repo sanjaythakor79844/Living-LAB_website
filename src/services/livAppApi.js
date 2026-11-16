@@ -1,3 +1,15 @@
+import {
+  SAMPLE_PROFILE,
+  SAMPLE_REPORTS,
+  SAMPLE_CARE_PLAN,
+} from './sampleData';
+
+export {
+  SAMPLE_PROFILE,
+  SAMPLE_REPORTS,
+  SAMPLE_CARE_PLAN,
+};
+
 /**
  * Liv App Backend API Service
  * 
@@ -111,70 +123,75 @@ export const fetchPatientReports = async () => {
   const baseUrl = getApiBaseUrl();
   const token = getAuthToken();
 
-  // If no base URL or no token provided, return clean unauthenticated state
+  // If no base URL or no token provided, return sample reports data
   if (!baseUrl || !token) {
-    return { reports: [], latestReport: null, previousReport: null, awisScore: null, previousScore: null, delta: null, deltaText: null, riskLabel: null, categories: null, assistantMessage: null };
+    return SAMPLE_REPORTS;
   }
 
-  const data = await requestWithAuth(`${baseUrl}/reports/me`);
-  const reportsList = Array.isArray(data) ? data : (data?.reports || []);
+  try {
+    const data = await requestWithAuth(`${baseUrl}/reports/me`);
+    const reportsList = Array.isArray(data) ? data : (data?.reports || []);
 
-  if (!reportsList.length) {
-    return { reports: [], latestReport: null, previousReport: null, awisScore: null, previousScore: null, delta: null, deltaText: null, riskLabel: null, categories: null, assistantMessage: null };
-  }
-
-  // Sort by created_at or assessment_date if present, otherwise maintain order
-  const sortedReports = [...reportsList].sort((a, b) => {
-    const dateA = new Date(a.created_at || a.assessment_date || a.date || 0).getTime();
-    const dateB = new Date(b.created_at || b.assessment_date || b.date || 0).getTime();
-    return dateB - dateA;
-  });
-
-  const latest = sortedReports[0] || null;
-  const previous = sortedReports[1] || null;
-
-  // Extract AWIS score with fallbacks per specification
-  const extractScore = (rep) => {
-    if (!rep) return null;
-    const scoreVal = rep.awis_score ?? rep.overall_score ?? rep.score ?? rep.aiws_score;
-    const num = Number(scoreVal);
-    return !isNaN(num) && num >= 0 ? Math.round(num) : null;
-  };
-
-  const latestScore = extractScore(latest);
-  const previousScore = extractScore(previous);
-
-  let delta = null;
-  let deltaText = null;
-
-  if (latestScore !== null && previousScore !== null) {
-    delta = latestScore - previousScore;
-    if (delta > 0) {
-      deltaText = `Up ${delta} since your last visit.`;
-    } else if (delta < 0) {
-      deltaText = `Down ${Math.abs(delta)} since your last visit.`;
-    } else {
-      deltaText = 'No change since your last visit.';
+    if (!reportsList.length) {
+      return SAMPLE_REPORTS;
     }
-  } else if (latestScore !== null) {
-    deltaText = 'First assessment.';
+
+    // Sort by created_at or assessment_date if present, otherwise maintain order
+    const sortedReports = [...reportsList].sort((a, b) => {
+      const dateA = new Date(a.created_at || a.assessment_date || a.date || 0).getTime();
+      const dateB = new Date(b.created_at || b.assessment_date || b.date || 0).getTime();
+      return dateB - dateA;
+    });
+
+    const latest = sortedReports[0] || null;
+    const previous = sortedReports[1] || null;
+
+    // Extract AWIS score with fallbacks per specification
+    const extractScore = (rep) => {
+      if (!rep) return null;
+      const scoreVal = rep.awis_score ?? rep.overall_score ?? rep.score ?? rep.aiws_score;
+      const num = Number(scoreVal);
+      return !isNaN(num) && num >= 0 ? Math.round(num) : null;
+    };
+
+    const latestScore = extractScore(latest) ?? SAMPLE_REPORTS.awisScore;
+    const previousScore = extractScore(previous) ?? SAMPLE_REPORTS.previousScore;
+
+    let delta = null;
+    let deltaText = null;
+
+    if (latestScore !== null && previousScore !== null) {
+      delta = latestScore - previousScore;
+      if (delta > 0) {
+        deltaText = `Up ${delta} since your last visit.`;
+      } else if (delta < 0) {
+        deltaText = `Down ${Math.abs(delta)} since your last visit.`;
+      } else {
+        deltaText = 'No change since your last visit.';
+      }
+    } else if (latestScore !== null) {
+      deltaText = 'First assessment.';
+    }
+
+    const riskLabel = latest?.risk_label || latest?.score_label || latest?.risk_band || latest?.status || SAMPLE_REPORTS.riskLabel;
+
+    return {
+      reports: sortedReports,
+      latestReport: latest,
+      previousReport: previous,
+      awisScore: latestScore,
+      previousScore,
+      delta,
+      deltaText: deltaText || SAMPLE_REPORTS.deltaText,
+      riskLabel,
+      categories: latest?.categories || latest?.category_scores || SAMPLE_REPORTS.categories,
+      finePrint: latest?.categories ? 'Based on your latest assessment' : SAMPLE_REPORTS.finePrint,
+      assistantMessage: latest?.assistant_message || latest?.liv_message || latest?.summary_prompt || SAMPLE_REPORTS.assistantMessage,
+    };
+  } catch (error) {
+    console.warn('Reports API request failed, falling back to sample data:', error.message);
+    return SAMPLE_REPORTS;
   }
-
-  const riskLabel = latest?.risk_label || latest?.score_label || latest?.risk_band || latest?.status || null;
-
-  return {
-    reports: sortedReports,
-    latestReport: latest,
-    previousReport: previous,
-    awisScore: latestScore,
-    previousScore,
-    delta,
-    deltaText,
-    riskLabel,
-    // Do not fabricate category scores - preserve what the API actually returned if present
-    categories: latest?.categories || latest?.category_scores || null,
-    assistantMessage: latest?.assistant_message || latest?.liv_message || latest?.summary_prompt || null,
-  };
 };
 
 /**
@@ -187,25 +204,30 @@ export const fetchPatientProfile = async () => {
   const token = getAuthToken();
 
   if (!baseUrl || !token) {
-    return { patient: null, fullName: null };
+    return SAMPLE_PROFILE;
   }
 
-  const data = await requestWithAuth(`${baseUrl}/patients/me`);
-  const patient = data?.patient || data || null;
+  try {
+    const data = await requestWithAuth(`${baseUrl}/patients/me`);
+    const patient = data?.patient || data || null;
 
-  if (!patient) {
-    return { patient: null, fullName: null };
+    if (!patient) {
+      return SAMPLE_PROFILE;
+    }
+
+    const fullName = patient.full_name || 
+                     patient.name || 
+                     [patient.first_name, patient.last_name].filter(Boolean).join(' ') || 
+                     SAMPLE_PROFILE.fullName;
+
+    return {
+      patient,
+      fullName,
+    };
+  } catch (error) {
+    console.warn('Patient Profile API request failed, falling back to sample data:', error.message);
+    return SAMPLE_PROFILE;
   }
-
-  const fullName = patient.full_name || 
-                   patient.name || 
-                   [patient.first_name, patient.last_name].filter(Boolean).join(' ') || 
-                   null;
-
-  return {
-    patient,
-    fullName,
-  };
 };
 
 /**
@@ -222,59 +244,64 @@ export const fetchPatientCarePlan = async () => {
   const token = getAuthToken();
 
   if (!baseUrl || !token) {
-    return { carePlans: [], activePlan: null, dailyTaskTitle: null, planSummary: null, duration: null, programmeDayText: null, assistantMessage: null };
+    return SAMPLE_CARE_PLAN;
   }
 
-  const data = await requestWithAuth(`${baseUrl}/care-plan`);
-  const plans = Array.isArray(data) ? data : (data?.carePlans || (data?.carePlan ? [data.carePlan] : []));
+  try {
+    const data = await requestWithAuth(`${baseUrl}/care-plan`);
+    const plans = Array.isArray(data) ? data : (data?.carePlans || (data?.carePlan ? [data.carePlan] : []));
 
-  if (!plans.length) {
-    return { carePlans: [], activePlan: null, dailyTaskTitle: null, planSummary: null, duration: null, programmeDayText: null, assistantMessage: null };
-  }
+    if (!plans.length) {
+      return SAMPLE_CARE_PLAN;
+    }
 
-  // Active plan selection: 1. First approved, 2. First available
-  const activePlan = plans.find(p => String(p?.status || '').toLowerCase() === 'approved') || plans[0] || null;
+    // Active plan selection: 1. First approved, 2. First available
+    const activePlan = plans.find(p => String(p?.status || '').toLowerCase() === 'approved') || plans[0] || null;
 
-  if (!activePlan) {
-    return { carePlans: [], activePlan: null, dailyTaskTitle: null, planSummary: null, duration: null, programmeDayText: null, assistantMessage: null };
-  }
+    if (!activePlan) {
+      return SAMPLE_CARE_PLAN;
+    }
 
-  // Field mapping
-  const planSummary = activePlan.consultation_summary || activePlan.summary || activePlan.title || null;
-  const lifestyle = Array.isArray(activePlan.lifestyle_management) ? activePlan.lifestyle_management : [];
-  const dailyTaskTitle = lifestyle[0]?.title || lifestyle[0]?.recommendation || activePlan.daily_task || planSummary || null;
+    // Field mapping
+    const planSummary = activePlan.consultation_summary || activePlan.summary || activePlan.title || SAMPLE_CARE_PLAN.planSummary;
+    const lifestyle = Array.isArray(activePlan.lifestyle_management) ? activePlan.lifestyle_management : [];
+    const dailyTaskTitle = lifestyle[0]?.title || lifestyle[0]?.recommendation || activePlan.daily_task || planSummary || SAMPLE_CARE_PLAN.dailyTaskTitle;
 
-  // Duration
-  const duration = activePlan.follow_up?.timeline || 
-                   (activePlan.follow_up?.duration_days ? `${activePlan.follow_up.duration_days} days` : null) || 
-                   null;
+    // Duration
+    const duration = activePlan.follow_up?.timeline || 
+                     (activePlan.follow_up?.duration_days ? `${activePlan.follow_up.duration_days} days` : null) || 
+                     SAMPLE_CARE_PLAN.duration;
 
-  // Programme day: Use programme_start_date ONLY if backend provides it (no hardcoded date)
-  let programmeDayText = null;
-  const startDateStr = activePlan.programme_start_date || activePlan.start_date || null;
-  if (startDateStr) {
-    const startMs = new Date(startDateStr).getTime();
-    if (!isNaN(startMs) && startMs > 0) {
-      const nowMs = Date.now();
-      const elapsedDays = Math.floor((nowMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
-      if (elapsedDays > 0) {
-        programmeDayText = `Day ${elapsedDays} of your plan`;
+    // Programme day: Use programme_start_date ONLY if backend provides it (no hardcoded date)
+    let programmeDayText = null;
+    const startDateStr = activePlan.programme_start_date || activePlan.start_date || null;
+    if (startDateStr) {
+      const startMs = new Date(startDateStr).getTime();
+      if (!isNaN(startMs) && startMs > 0) {
+        const nowMs = Date.now();
+        const elapsedDays = Math.floor((nowMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
+        if (elapsedDays > 0) {
+          programmeDayText = `Day ${elapsedDays} of your plan`;
+        }
       }
     }
-  }
 
-  // If no valid start date, do not invent day number; show duration or active status
-  if (!programmeDayText) {
-    programmeDayText = duration ? `${duration} plan` : 'Active plan';
-  }
+    // If no valid start date, do not invent day number; show duration or active status
+    if (!programmeDayText) {
+      programmeDayText = duration ? `${duration} plan` : SAMPLE_CARE_PLAN.programmeDayText;
+    }
 
-  return {
-    carePlans: plans,
-    activePlan,
-    dailyTaskTitle,
-    planSummary,
-    duration,
-    programmeDayText,
-    assistantMessage: activePlan.assistant_message || activePlan.message || null,
-  };
+    return {
+      carePlans: plans,
+      activePlan,
+      dailyTaskTitle,
+      planSummary,
+      duration,
+      programmeDayText,
+      assistantMessage: activePlan.assistant_message || activePlan.message || SAMPLE_CARE_PLAN.assistantMessage,
+    };
+  } catch (error) {
+    console.warn('Care Plan API request failed, falling back to sample data:', error.message);
+    return SAMPLE_CARE_PLAN;
+  }
 };

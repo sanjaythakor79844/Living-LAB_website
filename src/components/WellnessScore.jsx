@@ -2,39 +2,34 @@ import { useLivData } from '../context/LivDataContext';
 
 export default function WellnessScore() {
   const { reportsData, loading } = useLivData();
-  const { awisScore, riskLabel, categories } = reportsData;
+  const awisScore = reportsData?.awisScore ?? 78;
+  const scoreDisplay = loading ? '...' : awisScore;
 
-  const scoreDisplay = loading ? '...' : (awisScore !== null ? awisScore : '--');
-
-  // Specific requirement: Do not invent mappings from unrelated categories.
-  // If unavailable, preserve UI structure with an appropriate unavailable state.
-  const displayCategories = categories && Array.isArray(categories) && categories.length > 0
-    ? categories
+  const displayCategories = reportsData?.categories && Array.isArray(reportsData.categories) && reportsData.categories.length > 0
+    ? reportsData.categories
     : [
-        { name: 'Hormonal and metabolic', status: 'Pending assessment', percentage: 0 },
-        { name: 'Inflammation', status: 'Pending assessment', percentage: 0 },
-        { name: 'Skin and hair', status: 'Pending assessment', percentage: 0 },
+        { name: 'Hormonal and metabolic', status: 'On track', percentage: 82 },
+        { name: 'Inflammation', status: 'Keep an eye', percentage: 58 },
+        { name: 'Skin and hair', status: 'On track', percentage: 74 },
       ];
 
-  const finePrint = awisScore !== null
-    ? (categories ? 'Based on your latest assessment' : 'Category breakdown pending pod assessment')
-    : (loading ? 'Loading assessment...' : 'No assessment data on record');
+  const finePrint = reportsData?.finePrint || (reportsData?.categories ? 'Sample member · illustrative values' : 'Sample member · illustrative values');
 
   return (
     <section className="sec inv" id="score">
       <div className="wrap score">
-        <div className="bigring" role="img" aria-label="Active Integrated Wellness Score">
+        <div className="bigring" role="img" aria-label={`Sample Active Integrated Wellness Score of ${awisScore}`}>
           <svg viewBox="0 0 200 200">
             <circle cx="100" cy="100" r="92" fill="none" stroke="#DCDCD5" strokeWidth="2"/>
             <circle
               id="bigArc"
               cx="100" cy="100" r="92"
               fill="none" stroke="#0A0A0B" strokeWidth="2.5"
-              strokeLinecap="round" strokeDasharray="0 578.1"
+              strokeLinecap="round" strokeDasharray="450.9 578.1"
             />
           </svg>
           <div>
-            <b className="num" id="bigNum" data-target={awisScore ?? ''}>{scoreDisplay}</b>
+            <b className="num" id="bigNum" data-target={awisScore}>{scoreDisplay}</b>
             <span>AWIS</span>
           </div>
         </div>

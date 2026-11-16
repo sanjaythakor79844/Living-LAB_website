@@ -2,11 +2,10 @@ import { useLivData } from '../context/LivDataContext';
 
 export default function Hero() {
   const { reportsData, loading } = useLivData();
-  const { awisScore, riskLabel } = reportsData;
-
-  const scoreDisplay = loading ? '...' : (awisScore !== null ? awisScore : '--');
-  const scoreLabel = awisScore !== null ? (riskLabel || 'AWIS') : 'AWIS';
-  const statusNote = awisScore !== null ? (riskLabel || 'Active score') : (loading ? 'Loading...' : 'Sample score');
+  const awisScore = reportsData?.awisScore ?? 78;
+  const scoreDisplay = loading ? '...' : awisScore;
+  const scoreLabel = 'AWIS';
+  const statusNote = reportsData?.riskLabel || 'Sample score';
 
   return (
     <section className="sec hero">
@@ -26,7 +25,7 @@ export default function Hero() {
             </div>
           </div>
           <div className="podwrap">
-            <div className="pod" role="img" aria-label="The pod, holding the app, holding you.">
+            <div className="pod" role="img" aria-label="The pod, holding the app, holding you. Sample wellness score of 78.">
               <div className="app">
                 <div className="ring">
                   <svg viewBox="0 0 120 120">
@@ -35,11 +34,11 @@ export default function Hero() {
                       id="heroArc"
                       cx="60" cy="60" r="54"
                       fill="none" stroke="#F5F5F1" strokeWidth="2.5"
-                      strokeLinecap="round" strokeDasharray="0 339.3"
+                      strokeLinecap="round" strokeDasharray="264.6 339.3"
                     />
                   </svg>
                   <div>
-                    <b className="num" id="heroNum" data-target={awisScore ?? ''}>{scoreDisplay}</b>
+                    <b className="num" id="heroNum" data-target={awisScore}>{scoreDisplay}</b>
                     <span>{scoreLabel}</span>
                   </div>
                 </div>
