@@ -60,7 +60,7 @@ export default function ScrollEffects() {
         });
       }, { threshold: 0.12 });
 
-      const selectors = '.head,.say,.say-grid .lede,.step,.plan,.stations,.detail,.bigring,.score>div:last-child,.liv>div:first-child,.phone,.flow,.os>div:last-child,.why article,.tier,.model,.partner,.faq details,.about>div,.stat,.cta-band';
+      const selectors = '.head,.say,.say-grid .lede,.step,.plan,.stations,.detail,.bigring,.score>div:last-child,.liv>div:first-child,.phone,.flow,.os>div:last-child,.why article,.tier,.model,.partner,.faq details,.about>div,.stat,.cta-band,.contact-info,.contact-item,.enquiry-card';
       document.querySelectorAll(selectors).forEach((el) => {
         if (el.getBoundingClientRect().top < window.innerHeight) return;
         const siblings = el.parentNode ? Array.from(el.parentNode.children) : [];

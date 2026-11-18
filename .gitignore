@@ -14,9 +14,12 @@ build/
 .env.*
 !.env.example
 
-# Design references & decommissioned local backend
+# Design references
 the-living-lab-website*.html
-backend/
+backend/node_modules/
+backend/.env
+backend/.env.*
+!backend/.env.example
 
 # Logs
 npm-debug.log*

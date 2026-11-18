@@ -7,11 +7,17 @@ export default defineConfig(({ mode }) => {
 
   const mainTarget = env.VITE_API_BASE_URL || 'https://aaha-api-405281288207.asia-south1.run.app/api/v2';
   const featureTarget = env.VITE_FEATURE_API_BASE_URL || 'https://aaha-feature-backend.onrender.com/api/v2';
+  const backendTarget = env.VITE_BACKEND_URL || 'http://localhost:5000';
 
   return {
     plugins: [react()],
     server: {
       proxy: {
+        '/api': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
+        },
         '/api-proxy-main': {
           target: mainTarget,
           changeOrigin: true,
