@@ -106,14 +106,6 @@ export default function Contact() {
               </div>
 
               <div className="contact-item">
-                <span className="contact-label">Email</span>
-                <a href="mailto:contact@thelivinglab.ai" className="contact-val highlight-val">
-                  contact@thelivinglab.ai
-                </a>
-                <span className="contact-sub">Enquiries typically answered within 24 hours</span>
-              </div>
-
-              <div className="contact-item">
                 <span className="contact-label">Pilot Centre</span>
                 <span className="contact-val">The Living Lab Experience Centre</span>
                 <span className="contact-sub">Aundh, Pune, Maharashtra 411007, India</span>
