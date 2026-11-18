@@ -14,6 +14,8 @@ import HumanOS from './components/HumanOS';
 import Centres from './components/Centres';
 import FAQ from './components/FAQ';
 import Company from './components/Company';
+import Contact from './components/Contact';
+import MobileDock from './components/MobileDock';
 import Footer from './components/Footer';
 import ScrollEffects from './components/ScrollEffects';
 import { LivDataProvider } from './context/LivDataContext';
@@ -35,7 +37,9 @@ export default function App() {
         <Centres />
         <FAQ />
         <Company />
+        <Contact />
       </main>
+      <MobileDock />
       <Footer />
     </LivDataProvider>
   );

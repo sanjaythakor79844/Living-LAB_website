@@ -17,6 +17,7 @@ export default function Navbar() {
           <a href="#liv">Liv</a>
           <a href="#centres">For centres</a>
           <a href="#faq">Questions</a>
+          <a href="#contact">Contact</a>
         </nav>
       </div>
     </header>
